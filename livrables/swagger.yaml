@@ -1,87 +1,253 @@
 openapi: 3.0.3
 info:
-    title: TODO API
+    title: TODO List API
+    description: API REST pour gérer une liste de tâches
     version: 1.0.0
-    description: >
-        API de gestion d'une TODO List.
+    contact:
+        name: Polytech Nancy - TD Backend
+
 servers:
-    -   url: http://localhost:8080
-        description: Serveur local de développement
+    - url: http://localhost:8080
+      description: Serveur local de développement
 
 tags:
-    -   name: tasks
-        description: Opérations sur les tâches
+    - name: Tasks
+      description: Gestion des tâches
 
 paths:
     /tasks:
+        get:
+            tags:
+                - Tasks
+            summary: Récupérer toutes les tâches
+            description: Retourne la liste de toutes les tâches, avec possibilité de filtrer les tâches non terminées
+            parameters:
+                - name: todo-only
+                  in: query
+                  description: Si true, retourne uniquement les tâches non terminées
+                  required: false
+                  schema:
+                      type: boolean
+                      default: false
+            responses:
+                '200':
+                    description: Liste des tâches récupérée avec succès
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/TaskResponse'
+                '204':
+                    description: Aucune tâche trouvée
+                '500':
+                    description: Erreur serveur
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
         post:
-            tags: [ tasks ]
-            summary: Créer une tâche
-            operationId: createTask
+            tags:
+                - Tasks
+            summary: Créer une nouvelle tâche
+            description: Crée une nouvelle tâche avec un titre et une description. L'ID est auto-généré et done est initialisé à false.
             requestBody:
                 required: true
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/Task'
+                            $ref: '#/components/schemas/TaskCreate'
             responses:
                 '201':
                     description: Tâche créée avec succès
                     headers:
                         Location:
-                            description: URL de la ressource créée
+                            description: URI de la tâche créée
                             schema:
                                 type: string
-                                example: /tasks/1
+                                example: /tasks/4
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/Task'
+                                $ref: '#/components/schemas/TaskResponse'
+                '400':
+                    description: Données invalides
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '500':
+                    description: Erreur serveur
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
 
     /tasks/{id}:
-        parameters:
-            -   in: path
-                name: id
-                required: true
-                description: Identifiant numérique de la tâche
-                schema:
-                    type: integer
-                    minimum: 1
         get:
-            tags: [ tasks ]
-            summary: Récupérer une tâche
-            description: Récupérer une tâche par son identifiant
-            operationId: getTaskById
+            tags:
+                - Tasks
+            summary: Récupérer une tâche par son ID
+            description: Retourne les détails d'une tâche spécifique
+            parameters:
+                - name: id
+                  in: path
+                  description: ID de la tâche
+                  required: true
+                  schema:
+                      type: integer
+                      example: 1
             responses:
                 '200':
-                    description: Tâche trouvée avec succès
+                    description: Tâche trouvée
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/Task'
+                                $ref: '#/components/schemas/TaskResponse'
                 '404':
                     description: Tâche non trouvée
+                '500':
+                    description: Erreur serveur
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+        put:
+            tags:
+                - Tasks
+            summary: Mettre à jour une tâche
+            description: Met à jour le titre, la description et le statut d'une tâche existante
+            parameters:
+                - name: id
+                  in: path
+                  description: ID de la tâche à modifier
+                  required: true
+                  schema:
+                      type: integer
+                      example: 1
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TaskUpdate'
+            responses:
+                '200':
+                    description: Tâche mise à jour avec succès
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TaskResponse'
+                '400':
+                    description: Données invalides
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '404':
+                    description: Tâche non trouvée
+                '500':
+                    description: Erreur serveur
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+        delete:
+            tags:
+                - Tasks
+            summary: Supprimer une tâche
+            description: Supprime définitivement une tâche de la base de données
+            parameters:
+                - name: id
+                  in: path
+                  description: ID de la tâche à supprimer
+                  required: true
+                  schema:
+                      type: integer
+                      example: 1
+            responses:
+                '204':
+                    description: Tâche supprimée avec succès
+                '404':
+                    description: Tâche non trouvée
+                '500':
+                    description: Erreur serveur
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
 components:
     schemas:
-        Task:
+        TaskCreate:
             type: object
-            description: Représentation d'une tâche
+            required:
+                - title
+            properties:
+                title:
+                    type: string
+                    description: Titre de la tâche
+                    maxLength: 50
+                    example: "Réviser le cours de Java"
+                description:
+                    type: string
+                    description: Description détaillée de la tâche
+                    maxLength: 255
+                    example: "Revoir les chapitres sur les collections et les streams"
+
+        TaskUpdate:
+            type: object
+            required:
+                - title
+                - done
+            properties:
+                title:
+                    type: string
+                    description: Titre de la tâche
+                    maxLength: 50
+                    example: "Réviser le cours de Java"
+                description:
+                    type: string
+                    description: Description détaillée de la tâche
+                    maxLength: 255
+                    example: "Revoir les chapitres sur les collections et les streams"
+                done:
+                    type: boolean
+                    description: Statut de complétion de la tâche
+                    example: false
+
+        TaskResponse:
+            type: object
             properties:
                 id:
                     type: integer
+                    description: Identifiant unique de la tâche (auto-généré)
                     example: 1
                 title:
                     type: string
-                    nullable: false
-                    example: Acheter du lait
+                    description: Titre de la tâche
+                    example: "Réviser le cours de Java"
                 description:
                     type: string
-                    nullable: true
-                    example: 2L demi-écrémé
+                    description: Description détaillée de la tâche
+                    example: "Revoir les chapitres sur les collections et les streams"
                 done:
                     type: boolean
-                    nullable: false
+                    description: Statut de complétion de la tâche
                     example: false
-            required:
-                - id
-                - title
+
+        Error:
+            type: object
+            properties:
+                field:
+                    type: string
+                    description: Nom du champ en erreur (null pour les erreurs génériques)
+                    example: "title"
+                    nullable: true
+                message:
+                    type: string
+                    description: Description de l'erreur
+                    example: "maximum length is 50 characters"
