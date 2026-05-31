@@ -1,0 +1,159 @@
+openapi: 3.0.0
+info:
+  title: Todo API
+  description: API REST pour gérer une liste de tâches (Todo List)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Serveur local de développement
+
+paths:
+  /tasks:
+    post:
+      summary: Créer une nouvelle tâche
+      description: Ajoute une nouvelle tâche à la liste
+      operationId: createTask
+      tags:
+        - Tasks
+      requestBody:
+        description: Informations de la tâche à créer
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '201':
+          description: Tâche créée avec succès
+          headers:
+            Location:
+              description: URL de la tâche créée
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+    get:
+      summary: Récupérer toutes les tâches
+      description: Retourne la liste de toutes les tâches. Peut être filtré pour n'afficher que les tâches non terminées.
+      operationId: getAllTasks
+      tags:
+        - Tasks
+      parameters:
+        - name: todo-only
+          in: query
+          description: Si true, retourne uniquement les tâches non terminées (done = false)
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Liste des tâches récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+  /tasks/{id}:
+    get:
+      summary: Récupérer une tâche par son ID
+      description: Retourne les détails d'une tâche spécifique
+      operationId: getTaskById
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          description: Identifiant de la tâche
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tâche trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Tâche non trouvée
+
+    put:
+      summary: Modifier une tâche existante
+      description: Met à jour les informations d'une tâche identifiée par son ID
+      operationId: updateTask
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          description: Identifiant de la tâche à modifier
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Nouvelles informations de la tâche
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '200':
+          description: Tâche modifiée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Tâche non trouvée
+
+    delete:
+      summary: Supprimer une tâche
+      description: Supprime une tâche identifiée par son ID
+      operationId: deleteTask
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          description: Identifiant de la tâche à supprimer
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Tâche supprimée avec succès (pas de contenu)
+        '404':
+          description: Tâche non trouvée
+
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - done
+      properties:
+        id:
+          type: integer
+          description: Identifiant unique de la tâche
+          example: 1
+        title:
+          type: string
+          description: Titre de la tâche
+          example: "Réviser DS de maths"
+        description:
+          type: string
+          description: Description détaillée de la tâche
+          example: "Séries numériques et probabilités."
+        done:
+          type: boolean
+          description: Statut de complétion de la tâche
+          example: false

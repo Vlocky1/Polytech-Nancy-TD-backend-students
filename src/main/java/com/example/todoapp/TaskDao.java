@@ -1,5 +1,6 @@
 package com.example.todoapp;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -34,5 +35,37 @@ public class TaskDao {
      */
     public Optional<Task> findById(int id) {
         return Optional.ofNullable(storage.get(id));
+    }
+
+    /**
+     * Retrieve all {@link Task} models.
+     * @return Collection of all tasks.
+     */
+    public Collection<Task> findAll() {
+        return storage.values();
+    }
+
+    /**
+     * Update an existing {@link Task}.
+     * @param id   identifier of the task to update
+     * @param task new task data
+     * @return updated task wrapped by Optional, empty if task not found
+     */
+    public Optional<Task> update(int id, Task task) {
+        if (!storage.containsKey(id)) {
+            return Optional.empty();
+        }
+        Task updatedTask = new Task(id, task.title(), task.description(), task.done());
+        storage.put(id, updatedTask);
+        return Optional.of(updatedTask);
+    }
+
+    /**
+     * Delete a {@link Task} by id.
+     * @param id identifier of the task to delete
+     * @return true if task was deleted, false if not found
+     */
+    public boolean delete(int id) {
+        return storage.remove(id) != null;
     }
 }
